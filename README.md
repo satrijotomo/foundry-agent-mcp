@@ -95,7 +95,15 @@ In the workspace where you want to review code, add the following to `.vscode/mc
 }
 ```
 
-Start the server using the **Start** action in the MCP configuration editor, approve any trust prompt after reviewing the configuration, and confirm that `review_code_with_agent1` is available in Chat's tool picker. Authentication must already be configured as described above.
+Authentication must already be configured as described above. After saving the MCP configuration, check that the server is running:
+
+1. Press **Ctrl+Shift+P** to open the VS Code Command Palette.
+2. Run **MCP: List Servers**.
+3. Select **foundry-code-review**.
+4. If the server is not running, select **Start Server**. Approve any trust prompt only after reviewing the configuration.
+5. Confirm that `review_code_with_agent1` is available and enabled in Chat's tool picker before requesting a review.
+
+Alternatively, use the **Start** action above the server entry in the MCP configuration editor. If startup fails, use **MCP: List Servers**, select the server, and choose **Show Output** to inspect its logs.
 
 ### Add a Dropdown Agent
 
