@@ -38,7 +38,7 @@ In PowerShell, from the project directory:
 
 ```powershell
 py -m venv .venv
-\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 az login
 python server.py
@@ -69,6 +69,65 @@ Add a server entry in the MCP client's configuration. This example uses the comm
 ```
 
 The client process also needs a working `DefaultAzureCredential` identity. For example, sign in with Azure CLI in the same user context before starting the client. Restart or reload the MCP client after changing its configuration.
+
+## Use in VS Code Copilot
+
+Registering this MCP server makes its tools available to Copilot; it does not automatically add the remote Foundry agent to the Chat agent dropdown. You can use the tool from ordinary **Agent** mode without a custom agent file. To give this integration its own named dropdown entry, create a VS Code custom agent.
+
+### Register the MCP Server
+
+In the workspace where you want to review code, add the following to `.vscode/mcp.json`. VS Code uses `servers`, not the generic `mcpServers` key shown above. Replace the paths and Foundry values:
+
+```json
+{
+  "servers": {
+   "foundry-code-review": {
+    "type": "stdio",
+    "command": "C:\\dev-tools\\foundry-agent-mcp\\.venv\\Scripts\\python.exe",
+    "args": ["C:\\dev-tools\\foundry-agent-mcp\\server.py"],
+    "env": {
+      "FOUNDRY_PROJECT_ENDPOINT": "https://<your-project-resource>.services.ai.azure.com/api/projects/<your-project>",
+      "FOUNDRY_AGENT_NAME": "<your-agent-name>",
+      "FOUNDRY_MAX_CODE_CHARS": "20000"
+    }
+   }
+  }
+}
+```
+
+Start the server using the **Start** action in the MCP configuration editor, approve any trust prompt after reviewing the configuration, and confirm that `review_code_with_agent1` is available in Chat's tool picker. Authentication must already be configured as described above.
+
+### Add a Dropdown Agent
+
+Create `.github/agents/foundry-reviewer.agent.md` relative to the workspace root. The standard workspace location is `.github/agents`, not `.agents`. Put the file in the project you are reviewing; it does not have to live beside this wrapper's Python source.
+
+```markdown
+---
+name: Foundry Code Reviewer
+description: Review code quality and architecture using the configured Microsoft Foundry agent.
+tools: ['read', 'search', 'foundry-code-review/*']
+---
+
+Review code using the MCP tool review_code_with_agent1.
+
+1. Identify the user's review question and the selected code or requested file.
+  Ask for missing context when necessary.
+2. Read only the relevant code. Do not send secrets or unrelated files.
+  Code sent to the tool leaves this machine for the configured Foundry project.
+3. Call review_code_with_agent1 with developer_question, code_context, and filename.
+  Keep each excerpt within the configured FOUNDRY_MAX_CODE_CHARS limit
+  (20,000 characters by default). Ask the user to narrow oversized requests.
+4. Present the returned findings and prioritized actions, with file references
+  where supported by the result. Do not modify files or claim vulnerability scanning.
+5. If the tool is unavailable or fails, report that failure explicitly.
+  Do not present a local review as a successful Foundry review.
+```
+
+The `foundry-code-review/*` tool entry must match the server key in `.vscode/mcp.json`. It enables tools from that MCP server; `read` and `search` let Copilot gather the requested code. The displayed `name` can differ from `FOUNDRY_AGENT_NAME`: the former names the Copilot persona, while the latter selects the remote Foundry agent.
+
+Open Copilot Chat, select **Foundry Code Reviewer** from the agent dropdown, attach the relevant file or selection, and ask for a review. If the entry does not appear, check the file location and YAML frontmatter, then reload the VS Code window. This custom agent still uses a Copilot model to coordinate the request; the review itself is delegated to Foundry through the MCP tool.
+
+See the VS Code documentation for [custom agents](https://code.visualstudio.com/docs/copilot/customization/custom-agents) and [MCP servers](https://code.visualstudio.com/docs/copilot/customization/mcp-servers).
 
 ## Use the Tool
 
