@@ -112,11 +112,11 @@ Create `.github/agents/foundry-reviewer.agent.md` relative to the workspace root
 ```markdown
 ---
 name: Foundry Code Reviewer
-description: Review code quality and architecture using the configured Microsoft Foundry agent.
-tools: ['read', 'search', 'foundry-code-review/*']
+description: Review code quality and architecture using Microsoft Foundry and apply recommendations when requested.
+tools: ['read', 'search', 'edit', 'execute', 'foundry-code-review/*']
 ---
 
-Review code using the MCP tool review_code_with_agent1.
+Review code using the MCP tool review_code_with_agent1 and apply its recommendations when the user requests changes.
 
 1. Identify the user's review question and the selected code or requested file.
   Ask for missing context when necessary.
@@ -126,12 +126,23 @@ Review code using the MCP tool review_code_with_agent1.
   Keep each excerpt within the configured FOUNDRY_MAX_CODE_CHARS limit
   (20,000 characters by default). Ask the user to narrow oversized requests.
 4. Present the returned findings and prioritized actions, with file references
-  where supported by the result. Do not modify files or claim vulnerability scanning.
-5. If the tool is unavailable or fails, report that failure explicitly.
+  where supported by the result. Do not claim vulnerability scanning.
+5. For review-only requests, do not modify files. When the user asks to apply
+  recommendations, evaluate them against the current code, make focused edits,
+  and preserve unrelated user changes. Ask for clarification if the intended
+  behavior is ambiguous.
+6. After editing, run relevant tests, linters, or type checks using the project's
+  existing commands. Report the changes, validation results, and any checks
+  that could not be run. Do not commit or push unless explicitly requested.
+7. If the tool is unavailable or fails, report that failure explicitly.
   Do not present a local review as a successful Foundry review.
 ```
 
 The `foundry-code-review/*` tool entry must match the server key in `.vscode/mcp.json`. It enables tools from that MCP server; `read` and `search` let Copilot gather the requested code. The displayed `name` can differ from `FOUNDRY_AGENT_NAME`: the former names the Copilot persona, while the latter selects the remote Foundry agent.
+
+The `edit` alias lets the Copilot custom agent update workspace files. The `execute` alias lets it run terminal commands, such as tests and linters; it is not required merely to edit a file. These are tool names, not `-edit` or `-execute` flags. A YAML block list with entries such as `- edit` and `- execute` is also valid under `tools:`. Tool availability and approvals remain subject to VS Code settings and organizational policies. Remove `execute` if terminal access is not needed, or remove both `edit` and `execute` for a read-only reviewer.
+
+The Foundry MCP wrapper itself still only returns review recommendations. Copilot applies the requested changes locally through `edit` and runs validation through `execute`; adding these aliases does not give the remote Foundry agent direct access to local files. For example, ask: "Review the attached file using Foundry, apply the relevant recommendations, and run the existing tests."
 
 Open Copilot Chat, select **Foundry Code Reviewer** from the agent dropdown, attach the relevant file or selection, and ask for a review. If the entry does not appear, check the file location and YAML frontmatter, then reload the VS Code window. This custom agent still uses a Copilot model to coordinate the request; the review itself is delegated to Foundry through the MCP tool.
 
