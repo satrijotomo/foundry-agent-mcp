@@ -4,6 +4,22 @@ A small Python MCP server that exposes an existing Microsoft Foundry agent as an
 
 This project is a transport wrapper, not an agent host or vulnerability scanner. The Foundry project and agent must already exist, and the agent's instructions determine the review format and behavior.
 
+## Problem and Solution
+
+Teams may already have a central code-review agent in Microsoft Foundry, with shared instructions for code quality and architecture. Developers want to use that agent from GitHub Copilot in VS Code without manually copying code into a separate interface or duplicating the agent's review instructions locally.
+
+The integration gap is that a Foundry agent invoked through the Responses API is not automatically exposed as an MCP tool or added to Copilot's agent dropdown. VS Code can connect to MCP servers, but this workflow needs a bridge that translates an MCP tool call into a request to the configured Foundry agent.
+
+![Connection diagram showing GitHub Copilot in VS Code, an MCP bridge, and Microsoft Foundry Agent Service](docs/images/vscode2foundryproblem.png)
+
+This wrapper provides that bridge. It exposes `review_code_with_agent1` over MCP stdio, accepts the review question and code excerpt, authenticates to Foundry using `DefaultAzureCredential`, calls the named agent through the Responses API, and returns the review to Copilot. The review instructions stay with the central Foundry agent, while developers can request reviews from their editor.
+
+![Wrapper diagram showing the MCP tool call from Copilot through server.py to the Foundry code-review agent](docs/images/thebridge.png)
+
+Copilot remains responsible for gathering relevant local code and presenting the findings. With a custom agent configured to use `edit` and `execute`, it can also apply recommendations when requested and run local validation. The remote Foundry agent and this wrapper do not directly edit workspace files.
+
+The diagrams illustrate the broader integration pattern. This implementation runs locally using stdio and does not explicitly create or persist a Foundry conversation across tool calls. The code excerpt limit defaults to 20,000 characters and is configurable. Input limits and JSON parsing do not redact secrets or guarantee safe or correct review output; only submit code you are authorized to share.
+
 ## How It Works
 
 1. The server reads the Foundry project endpoint, agent name, and optional code-size limit from environment variables (including a local `.env` file).
