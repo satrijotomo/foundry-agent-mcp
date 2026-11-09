@@ -188,6 +188,12 @@ The result includes the configured `agent_name`, the `filename`, `characters_rev
 
 Only send code and context that you are authorized to share with the configured Foundry project. The wrapper forwards the supplied code to the agent; it does not redact secrets or scan for vulnerabilities. Do not include credentials or other sensitive values in a review request.
 
+## Example User Experience
+
+The screenshot below shows a user asking Copilot to review a Python file, improve its efficiency, and explain the changes. The recommendation behind the code highlighted in green was produced by the remote Foundry agent in response to the request prompt shown in the screenshot. Copilot applied the recommendation locally; the green blocks show added code in VS Code's diff view, while the red blocks show removed code.
+
+![VS Code showing the user's review request, Copilot's explanation, and the local code changes based on the remote Foundry agent's recommendation](docs/images/vscode.png)
+
 ## Legal Disclaimer
 
 This repository is provided for educational and demonstration purposes only. The code, documentation, and any agent-generated output are provided "AS IS" and "AS AVAILABLE", without warranty of any kind, express or implied, including warranties of merchantability, fitness for a particular purpose, and noninfringement.
