@@ -35,6 +35,14 @@ The diagrams illustrate the broader integration pattern. This implementation run
 - An identity supported by `DefaultAzureCredential`, with permission to use the project and agent. For local development, one option is to sign in with Azure CLI using `az login`.
 - The project endpoint and agent name.
 
+## Preexisting Foundry Agent
+
+The screenshot below shows the existing Microsoft Foundry agent used with this repository. This agent was already created and configured before the MCP wrapper was implemented; creating or deploying a Foundry agent is not part of this wrapper's setup.
+
+![Existing Microsoft Foundry agent used by this MCP wrapper](docs/images/foundryagent.png)
+
+Before configuring the wrapper, create your own Foundry project and agent or obtain access to an existing one. Configure the agent's review instructions in Foundry, then set `FOUNDRY_PROJECT_ENDPOINT` and `FOUNDRY_AGENT_NAME` to identify that project and agent. The wrapper connects to the named agent; it does not provision the project, create the agent, or define its review instructions.
+
 ## Configure
 
 From the project directory, create a `.env` file:
